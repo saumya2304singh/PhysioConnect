@@ -7,9 +7,91 @@
 
 import UIKit
 
+// ------------------------------------------------------------
+// MARK: - ADVANCED STAT VIEW (ICON + TWO-LINE TEXT)
+// ------------------------------------------------------------
+final class AdvancedStatView: UIView {
+
+    private let iconContainer = UIView()
+    private let iconView = UIImageView()
+
+    private let topLabel = UILabel()
+    private let bottomLabel = UILabel()
+
+    init(icon: String, topText: String, bottomText: String) {
+        super.init(frame: .zero)
+        setup(icon: icon, topText: topText, bottomText: bottomText)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    private func setup(icon: String, topText: String, bottomText: String) {
+
+        // Circle background
+        iconContainer.backgroundColor = .white
+        iconContainer.layer.cornerRadius = 16
+        iconContainer.layer.shadowColor = UIColor.black.cgColor
+        iconContainer.layer.shadowOpacity = 0.08
+        iconContainer.layer.shadowRadius = 6
+        iconContainer.layer.shadowOffset = CGSize(width: 0, height: 3)
+
+        // Icon
+        iconView.image = UIImage(systemName: icon)
+        iconView.tintColor = UIColor(hex: "1E6EF7")
+        iconView.contentMode = .scaleAspectFit
+
+        // Text
+        topLabel.text = topText
+        topLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        topLabel.textAlignment = .center
+
+        bottomLabel.text = bottomText
+        bottomLabel.font = .systemFont(ofSize: 13)
+        bottomLabel.textColor = .darkGray
+        bottomLabel.textAlignment = .center
+
+        // Stack
+        let stack = UIStackView(arrangedSubviews: [iconContainer, topLabel, bottomLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 6
+
+        addSubview(stack)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.translatesAutoresizingMaskIntoConstraints = false
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconContainer.addSubview(iconView)
+
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: topAnchor),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor),
+
+            iconContainer.widthAnchor.constraint(equalToConstant: 40),
+            iconContainer.heightAnchor.constraint(equalToConstant: 40),
+
+            iconView.centerXAnchor.constraint(equalTo: iconContainer.centerXAnchor),
+            iconView.centerYAnchor.constraint(equalTo: iconContainer.centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 24),
+            iconView.heightAnchor.constraint(equalToConstant: 24)
+        ])
+    }
+
+    // Update text dynamically
+    func setValues(top: String, bottom: String) {
+        topLabel.text = top
+        bottomLabel.text = bottom
+    }
+}
+
+
+// ------------------------------------------------------------
+// MARK: - MAIN VIEW
+// ------------------------------------------------------------
 final class PhysiotherapistDetailView: UIView {
 
-    // MARK: - Header (STATIC, not scrolling)
+    // MARK: Header
     let headerContainer = UIView()
     let backButton = UIButton(type: .system)
     let headerLabel: UILabel = {
@@ -20,42 +102,18 @@ final class PhysiotherapistDetailView: UIView {
         return label
     }()
 
-    // MARK: - ScrollView
+    // MARK: Scroll Section
     let scrollView = UIScrollView()
     let contentView = UIView()
 
-    // MARK: - Doctor Card
-    let doctorCard = UIView()
-    let doctorImageView = UIImageView()
-    let nameLabel = UILabel()
-    let ratingLabel = UILabel()
-    let distanceLabel = UILabel()
-    let specializationLabel = UILabel()
+    // MARK: Doctor Card
+    let doctorCard = DoctorProfileCardView()
 
-    // Consultation Fee Row
-    let feeTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Consultation Fees:"
-        label.font = .systemFont(ofSize: 13)
-        label.textColor = .darkGray
-        return label
-    }()
+    // MARK: Stats Section
+    let patientsStat = AdvancedStatView(icon: "person.3.fill", topText: "0+", bottomText: "patients")
+    let experienceStat = AdvancedStatView(icon: "medal.fill", topText: "0+", bottomText: "experience")
 
-    let feeLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 13, weight: .bold)
-        label.textColor = UIColor(hex: "1E6EF7")
-        return label
-    }()
-
-    // MARK: - Stats Card
-    let statsCard = UIView()
-    let patientsStat = StatView(icon: "person.3.fill", title: "2,000+ patients")
-    let experienceStat = StatView(icon: "clock.fill", title: "10+ yrs exp.")
-    //let ratingStat = StatView(icon: "star.fill", title: "5.0 rating")
-    //let reviewsStat = StatView(icon: "text.bubble.fill", title: "1,872 reviews")
-
-    // MARK: - About Section
+    // MARK: About Section
     let aboutTitle = UILabel()
     let aboutText = UILabel()
     let seeMoreButton: UIButton = {
@@ -66,48 +124,43 @@ final class PhysiotherapistDetailView: UIView {
         return btn
     }()
 
-    // MARK: - Book Button
+    // MARK: Book Button
     let bookButton = UIButton(type: .system)
+    
 
-    // MARK: - Reviews
+    // MARK: Reviews
     let reviewsTitle = UILabel()
     let seeAllButton = UIButton(type: .system)
     let reviewsTableView = UITableView()
-
-    // Dynamic height
     var reviewsTableHeightConstraint: NSLayoutConstraint!
 
-    // MARK: - Init
+    // ------------------------------------------------------------
+    // MARK: Init
+    // ------------------------------------------------------------
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = UIColor(hex: "E3F0FF")
         setupLayout()
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    // MARK: ----------------------------------------
-    // MARK: FULL LAYOUT SETUP
-    // MARK: ----------------------------------------
 
+    // ------------------------------------------------------------
+    // MARK: Layout Setup
+    // ------------------------------------------------------------
     private func setupLayout() {
 
-        // -------------------------------------------------
-        // STATIC HEADER (NOT inside scroll view)
-        // -------------------------------------------------
+        // HEADER
         addSubview(headerContainer)
         headerContainer.translatesAutoresizingMaskIntoConstraints = false
-        headerLabel.backgroundColor = .clear
-
 
         backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
         backButton.tintColor = .black
-        headerContainer.addSubview(backButton)
-        backButton.translatesAutoresizingMaskIntoConstraints = false
 
+        headerContainer.addSubview(backButton)
         headerContainer.addSubview(headerLabel)
+        backButton.translatesAutoresizingMaskIntoConstraints = false
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
@@ -116,16 +169,14 @@ final class PhysiotherapistDetailView: UIView {
             headerContainer.trailingAnchor.constraint(equalTo: trailingAnchor),
             headerContainer.heightAnchor.constraint(equalToConstant: 50),
 
-            backButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
             backButton.leadingAnchor.constraint(equalTo: headerContainer.leadingAnchor, constant: 16),
+            backButton.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
 
-            headerLabel.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor),
-            headerLabel.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor)
+            headerLabel.centerXAnchor.constraint(equalTo: headerContainer.centerXAnchor),
+            headerLabel.centerYAnchor.constraint(equalTo: headerContainer.centerYAnchor)
         ])
 
-        // -------------------------------------------------
-        // SCROLL VIEW CONTENT
-        // -------------------------------------------------
+        // SCROLL SECTION
         addSubview(scrollView)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.addSubview(contentView)
@@ -144,106 +195,49 @@ final class PhysiotherapistDetailView: UIView {
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
 
-        // -------------------------------------------------
         // DOCTOR CARD
-        // -------------------------------------------------
-        configureCard(doctorCard)
         contentView.addSubview(doctorCard)
         doctorCard.translatesAutoresizingMaskIntoConstraints = false
-        doctorCard.layer.cornerRadius = 24
-
-        doctorImageView.layer.cornerRadius = 24
-        doctorImageView.clipsToBounds = true
-        doctorImageView.contentMode = .scaleAspectFill
-
-        nameLabel.font = .boldSystemFont(ofSize: 17)
-        ratingLabel.font = .systemFont(ofSize: 13)
-        ratingLabel.textColor = .darkGray
-        distanceLabel.font = .systemFont(ofSize: 13)
-        distanceLabel.textColor = .darkGray
-        specializationLabel.font = .systemFont(ofSize: 13)
-        specializationLabel.textColor = .darkGray
-
-        let doctorStack = UIStackView(arrangedSubviews: [
-            nameLabel,
-            ratingLabel,
-            distanceLabel,
-            specializationLabel
-        ])
-        doctorStack.axis = .vertical
-        doctorStack.spacing = 6
-        doctorStack.alignment = .leading
-
-        doctorCard.addSubview(doctorImageView)
-        doctorCard.addSubview(doctorStack)
-        doctorCard.addSubview(feeTitleLabel)
-        doctorCard.addSubview(feeLabel)
-
-        doctorImageView.translatesAutoresizingMaskIntoConstraints = false
-        doctorStack.translatesAutoresizingMaskIntoConstraints = false
-        feeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        feeLabel.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             doctorCard.topAnchor.constraint(equalTo: contentView.topAnchor),
             doctorCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            doctorCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-
-            doctorImageView.leadingAnchor.constraint(equalTo: doctorCard.leadingAnchor, constant: 16),
-            doctorImageView.topAnchor.constraint(equalTo: doctorCard.topAnchor, constant: 17),
-            doctorImageView.widthAnchor.constraint(equalToConstant: 110),
-            doctorImageView.heightAnchor.constraint(equalToConstant: 110),
-
-            doctorStack.topAnchor.constraint(equalTo: doctorCard.topAnchor, constant: 18),
-            doctorStack.leadingAnchor.constraint(equalTo: doctorImageView.trailingAnchor, constant: 16),
-            doctorStack.trailingAnchor.constraint(equalTo: doctorCard.trailingAnchor, constant: -16),
-
-            feeTitleLabel.topAnchor.constraint(equalTo: doctorStack.bottomAnchor, constant: 6),
-            feeTitleLabel.leadingAnchor.constraint(equalTo: doctorStack.leadingAnchor),
-            feeTitleLabel.bottomAnchor.constraint(equalTo: doctorCard.bottomAnchor, constant: -20),
-
-            feeLabel.centerYAnchor.constraint(equalTo: feeTitleLabel.centerYAnchor),
-            feeLabel.trailingAnchor.constraint(equalTo: doctorCard.trailingAnchor, constant: -16)
+            doctorCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
         ])
 
-        // -------------------------------------------------
-        // STATS CARD
-        // -------------------------------------------------
-        configureCard(statsCard)
-        contentView.addSubview(statsCard)
-        statsCard.translatesAutoresizingMaskIntoConstraints = false
-        statsCard.backgroundColor = .white
-        statsCard.layer.cornerRadius = 24
-
-        // Create only 2 StatViews
-        let patientsStat = StatView(icon: "person.3.fill", title: "2,000+ patients")
-        let experienceStat = StatView(icon: "clock.fill", title: "10+ yrs exp.")
-
+        // STATS SECTION
         let statsStack = UIStackView(arrangedSubviews: [patientsStat, experienceStat])
         statsStack.axis = .horizontal
         statsStack.distribution = .fillEqually
         statsStack.alignment = .center
-        statsStack.spacing = 8
+        statsStack.spacing = 16
 
-        statsCard.addSubview(statsStack)
+        let statsContainer = UIView()
+        statsContainer.backgroundColor = .clear
+        statsContainer.layer.cornerRadius = 24
+        statsContainer.layer.shadowColor = UIColor.black.cgColor
+        statsContainer.layer.shadowOpacity = 0.08
+        statsContainer.layer.shadowRadius = 6
+        statsContainer.layer.shadowOffset = CGSize(width: 0, height: 3)
+
+        contentView.addSubview(statsContainer)
+        statsContainer.addSubview(statsStack)
+        statsContainer.translatesAutoresizingMaskIntoConstraints = false
         statsStack.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            statsCard.topAnchor.constraint(equalTo: doctorCard.bottomAnchor, constant: 20),
-            statsCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            statsCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            statsCard.heightAnchor.constraint(equalToConstant: 70),
-            
-            statsStack.topAnchor.constraint(equalTo: statsCard.topAnchor, constant: 8),
-            statsStack.leadingAnchor.constraint(equalTo: statsCard.leadingAnchor, constant: 16),
-            statsStack.trailingAnchor.constraint(equalTo: statsCard.trailingAnchor, constant: -16),
-            statsStack.bottomAnchor.constraint(equalTo: statsCard.bottomAnchor, constant: -8)
+            statsContainer.topAnchor.constraint(equalTo: doctorCard.bottomAnchor, constant: 12),
+            statsContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            statsContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            statsContainer.heightAnchor.constraint(equalToConstant: 106),
+
+            statsStack.topAnchor.constraint(equalTo: statsContainer.topAnchor, constant: 6),
+            statsStack.leadingAnchor.constraint(equalTo: statsContainer.leadingAnchor, constant: 16),
+            statsStack.trailingAnchor.constraint(equalTo: statsContainer.trailingAnchor, constant: -16),
+            statsStack.bottomAnchor.constraint(equalTo: statsContainer.bottomAnchor, constant: -6)
         ])
 
-
-        // -------------------------------------------------
         // ABOUT SECTION
-        // -------------------------------------------------
         aboutTitle.text = "About"
         aboutTitle.font = .boldSystemFont(ofSize: 20)
 
@@ -261,7 +255,7 @@ final class PhysiotherapistDetailView: UIView {
         seeMoreButton.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            aboutTitle.topAnchor.constraint(equalTo: statsCard.bottomAnchor, constant: 20),
+            aboutTitle.topAnchor.constraint(equalTo: statsContainer.bottomAnchor, constant: 20),
             aboutTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
 
             aboutText.topAnchor.constraint(equalTo: aboutTitle.bottomAnchor, constant: 8),
@@ -272,9 +266,7 @@ final class PhysiotherapistDetailView: UIView {
             seeMoreButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16)
         ])
 
-        // -------------------------------------------------
         // BOOK BUTTON
-        // -------------------------------------------------
         bookButton.setTitle("Book Appointment", for: .normal)
         bookButton.backgroundColor = UIColor(hex: "1E6EF7")
         bookButton.setTitleColor(.white, for: .normal)
@@ -290,14 +282,11 @@ final class PhysiotherapistDetailView: UIView {
             bookButton.heightAnchor.constraint(equalToConstant: 48)
         ])
 
-        // -------------------------------------------------
         // REVIEWS
-        // -------------------------------------------------
         reviewsTitle.text = "Reviews"
         reviewsTitle.font = .boldSystemFont(ofSize: 20)
 
         seeAllButton.setTitle("See All", for: .normal)
-        seeAllButton.setTitleColor(.darkGray, for: .normal)
         seeAllButton.titleLabel?.font = .systemFont(ofSize: 13)
 
         contentView.addSubview(reviewsTitle)
@@ -318,7 +307,7 @@ final class PhysiotherapistDetailView: UIView {
             reviewsTableView.topAnchor.constraint(equalTo: reviewsTitle.bottomAnchor, constant: 12),
             reviewsTableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             reviewsTableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            reviewsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20)
+            reviewsTableView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -50)
         ])
 
         reviewsTableHeightConstraint = reviewsTableView.heightAnchor.constraint(equalToConstant: 1)
@@ -326,64 +315,7 @@ final class PhysiotherapistDetailView: UIView {
 
         reviewsTableView.register(ReviewCell.self, forCellReuseIdentifier: "ReviewCell")
         reviewsTableView.isScrollEnabled = false
-        reviewsTableView.backgroundColor = .clear
         reviewsTableView.separatorStyle = .none
-        reviewsTableView.rowHeight = UITableView.automaticDimension
-        reviewsTableView.estimatedRowHeight = 130
-    }
-
-    // MARK: - Helpers
-    private func configureCard(_ view: UIView) {
-        view.backgroundColor = .white
-        view.layer.cornerRadius = 24
-        view.layer.borderColor = UIColor(hex: "D4E3FE").cgColor
-        view.layer.borderWidth = 1
-        view.layer.shadowColor = UIColor.black.cgColor
-        view.layer.shadowOpacity = 0.08
-        view.layer.shadowRadius = 6
-        view.layer.shadowOffset = CGSize(width: 0, height: 3)
-    }
-}
-
-//
-//  StatView.swift
-//
-
-final class StatView: UIView {
-    init(icon: String, title: String) {
-        super.init(frame: .zero)
-
-        let iv = UIImageView(image: UIImage(systemName: icon))
-        iv.tintColor = UIColor(hex: "1E6EF7")
-        iv.contentMode = .scaleAspectFit
-
-        let label = UILabel()
-        label.text = title
-        label.font = .systemFont(ofSize: 13)
-        label.textAlignment = .center
-        label.textColor = .darkGray
-
-        let stack = UIStackView(arrangedSubviews: [iv, label])
-        stack.axis = .vertical
-        stack.alignment = .center
-        stack.spacing = 4
-
-        addSubview(stack)
-        iv.translatesAutoresizingMaskIntoConstraints = false
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            iv.heightAnchor.constraint(equalToConstant: 20),
-            iv.widthAnchor.constraint(equalToConstant: 20),
-
-            stack.topAnchor.constraint(equalTo: topAnchor),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        reviewsTableView.backgroundColor = .clear
     }
 }

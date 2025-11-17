@@ -22,7 +22,10 @@ final class LandingHomeScreenViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        navigationItem.hidesBackButton = true
+        homeView.bookButton.addTarget(self, action: #selector(bookAppointmentTapped), for: .touchUpInside)
 
+        
         // MARK: Setup Model Data
         homeModel = LandingHomeModel(
             videos: [
@@ -59,6 +62,12 @@ final class LandingHomeScreenViewController: UIViewController {
         // Handle segmented control (week change)
         homeView.weekSegment.addTarget(self, action: #selector(weekChanged(_:)), for: .valueChanged)
     }
+    
+    @objc private func bookAppointmentTapped() {
+        let vc = DoctorListViewController()
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
 
     // MARK: - Week Segment Change
     @objc private func weekChanged(_ sender: UISegmentedControl) {

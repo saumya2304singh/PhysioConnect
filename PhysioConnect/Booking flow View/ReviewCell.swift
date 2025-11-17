@@ -88,27 +88,32 @@ final class ReviewCell: UITableViewCell {
     }
     
     func configure(with review: Review, expanded: Bool) {
-            userImageView.image = UIImage(named: review.imageName)
-            nameLabel.text = review.reviewerName
-            ratingLabel.text = "⭐️ \(review.rating)"
-            commentLabel.text = review.comment
-        
-            let paragraph = NSMutableParagraphStyle()
-            paragraph.lineSpacing = 6
-            paragraph.alignment = .left
-        
-            let attributed = NSAttributedString(
-                string: review.comment,
-                attributes: [
-                    .font: UIFont.systemFont(ofSize: 13),
-                    .foregroundColor: UIColor.darkGray,
-                    .paragraphStyle: paragraph
-                ]
-            )
-            
-            commentLabel.attributedText = attributed
-
-            isExpanded = expanded
-            commentLabel.numberOfLines = expanded ? 0 : 2   // ⬅️ expand/collapse logic
+        // Image
+        if let imageName = review.imageName,
+           let image = UIImage(named: imageName) {
+            userImageView.image = image
+        } else {
+            userImageView.image = UIImage(named: "reviewPlaceholder") // or nil / any fallback
         }
+
+        nameLabel.text = review.reviewerName
+        ratingLabel.text = "⭐️ \(review.rating)"
+
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = 6
+        paragraph.alignment = .left
+
+        commentLabel.attributedText = NSAttributedString(
+            string: review.comment,
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 13),
+                .foregroundColor: UIColor.darkGray,
+                .paragraphStyle: paragraph
+            ]
+        )
+
+        commentLabel.numberOfLines = expanded ? 0 : 2
+        isExpanded = expanded
+    }
+
 }

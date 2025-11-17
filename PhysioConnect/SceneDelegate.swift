@@ -19,7 +19,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
             // 🔹 Use your programmatic home screen here:
-            let homeVC = PhysiotherapistDetailViewController()
+            let homeVC = LandingHomeScreenViewController()
             let nav = UINavigationController(rootViewController: homeVC)
             window.rootViewController = nav
             self.window = window
