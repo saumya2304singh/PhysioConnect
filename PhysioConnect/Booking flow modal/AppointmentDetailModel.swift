@@ -12,9 +12,15 @@ struct AppointmentDetail {
     let doctor: Doctor
     let date: Date
     let location: String
-    let status: String
+    var status: AppointmentStatus
     
     var notesKey: String {
         "appointment_notes_\(id.uuidString)"
     }
+    enum AppointmentStatus: String {
+        case confirmed
+        case completed
+        case cancelled
+    }
+
 }

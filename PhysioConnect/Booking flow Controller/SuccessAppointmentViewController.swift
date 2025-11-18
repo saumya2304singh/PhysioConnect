@@ -173,12 +173,31 @@ final class SuccessAppointmentViewController: UIViewController {
         dismiss(animated: true) { [weak self] in
             guard let self = self else { return }
 
-            // Send booking info up callback
+            // ----------------------------------------------------
+            // 1️⃣ Save appointment globally so all screens update
+            // ----------------------------------------------------
             if let doctor = self.doctor, let date = self.appointmentDate {
+
+                let appointment = AppointmentDetail(
+                    id: UUID(),
+                    doctor: doctor,
+                    date: date,
+                    location: self.userLocation,
+                    status: .confirmed
+                )
+
+                AppointmentStore.shared.currentAppointment = appointment
+
+                // Notify Home + Upcoming screens
+                NotificationCenter.default.post(name: .appointmentUpdated, object: appointment)
+
+                // Call callback chain upwards if needed
                 self.onBookingComplete?(doctor, date)
             }
 
-            // Get the tab bar (since it's the new root)
+            // ----------------------------------------------------
+            // 2️⃣ Navigate back to Home tab
+            // ----------------------------------------------------
             if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                let window = windowScene.windows.first,
                let tabBar = window.rootViewController as? MainTabBarController {
@@ -186,13 +205,14 @@ final class SuccessAppointmentViewController: UIViewController {
                 // Switch to HOME tab (index 0)
                 tabBar.selectedIndex = 0
 
-                // Also pop navigation inside Home tab
+                // Also pop inside the Home navigation stack
                 if let homeNav = tabBar.viewControllers?[0] as? UINavigationController {
                     homeNav.popToRootViewController(animated: false)
                 }
             }
         }
     }
+
 
 
 

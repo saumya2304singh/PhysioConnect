@@ -80,17 +80,19 @@ final class DoctorProfileCardView: UIView {
             nameLabel.leadingAnchor.constraint(equalTo: doctorImageView.trailingAnchor, constant: 16),
             nameLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
 
-            ratingLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 6),
+            ratingLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
             ratingLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
 
-            distanceLabel.topAnchor.constraint(equalTo: ratingLabel.bottomAnchor, constant: 4),
+            distanceLabel.topAnchor.constraint(equalTo: ratingLabel.bottomAnchor, constant: 6),
             distanceLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
 
-            specializationLabel.topAnchor.constraint(equalTo: distanceLabel.bottomAnchor, constant: 4),
+            specializationLabel.topAnchor.constraint(equalTo: distanceLabel.bottomAnchor, constant: 6),
             specializationLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            specializationLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
 
-            feeTitleLabel.topAnchor.constraint(equalTo: specializationLabel.bottomAnchor, constant: 10),
+            feeTitleLabel.topAnchor.constraint(equalTo: specializationLabel.bottomAnchor, constant: 6),
             feeTitleLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
+            feeTitleLabel.bottomAnchor.constraint(equalTo:bottomAnchor, constant: 16),
 
             feeLabel.centerYAnchor.constraint(equalTo: feeTitleLabel.centerYAnchor),
             feeLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),

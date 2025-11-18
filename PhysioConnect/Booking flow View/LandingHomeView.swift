@@ -277,10 +277,11 @@ extension LandingHomeView {
             upcomingDate.topAnchor.constraint(equalTo: upcomingName.bottomAnchor, constant: 4),
             upcomingDate.leadingAnchor.constraint(equalTo: upcomingTitle.leadingAnchor),
             
-            upcomingButton.centerYAnchor.constraint(equalTo: upcomingCard.centerYAnchor),
-            upcomingButton.trailingAnchor.constraint(equalTo: upcomingCard.trailingAnchor, constant: -16),
-            upcomingButton.heightAnchor.constraint(equalToConstant: 36),
-            upcomingButton.widthAnchor.constraint(equalToConstant: 130)
+            upcomingButton.topAnchor.constraint(equalTo: upcomingDate.bottomAnchor, constant: 12),
+                upcomingButton.leadingAnchor.constraint(equalTo: upcomingTitle.leadingAnchor),
+                upcomingButton.heightAnchor.constraint(equalToConstant: 36),
+                upcomingButton.widthAnchor.constraint(equalToConstant: 130),
+                upcomingButton.bottomAnchor.constraint(equalTo: upcomingCard.bottomAnchor, constant: -16)
         ])
     }
     

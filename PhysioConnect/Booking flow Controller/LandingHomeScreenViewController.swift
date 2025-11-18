@@ -12,7 +12,25 @@ final class LandingHomeScreenViewController: UIViewController {
     // MARK: - Properties
     private var homeView: LandingHomeView!          // View layer
     private var homeModel: LandingHomeModel!        // Model layer
-    private var currentAppointment: AppointmentDetail?
+    private var currentAppointment: AppointmentDetail? {
+        AppointmentStore.shared.currentAppointment
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        if let appt = AppointmentStore.shared.currentAppointment {
+            homeView.updateUpcomingAppointment(
+                doctorName: appt.doctor.name,
+                date: appt.date
+            )
+        } else {
+            homeView.showBookAppointmentCard()
+        }
+    }
+    
+    
+
 
 
     // MARK: - Lifecycle
@@ -85,22 +103,19 @@ final class LandingHomeScreenViewController: UIViewController {
         
         // When booking is finally completed from deep in the flow,
         // this closure will be called with doctor + date.
-        vc.onBookingComplete = { [weak self] doctor, date in
-            guard let self = self else { return }
-            
-            self.currentAppointment = AppointmentDetail(
-                    id: UUID(),
-                    doctor: doctor,
-                    date: date,
-                    location: "Home Visit",
-                    status: "Confirmed"
-                )
-            self.homeView.updateUpcomingAppointment(
-                doctorName: doctor.name,
-                date: date
+        vc.onBookingComplete = { doctor, date in
+            let appt = AppointmentDetail(
+                id: UUID(),
+                doctor: doctor,
+                date: date,
+                location: "Home Visit",
+                status: .confirmed
             )
+
+            AppointmentStore.shared.currentAppointment = appt
+            NotificationCenter.default.post(name: .appointmentUpdated, object: appt)
         }
-        
+
         navigationController?.pushViewController(vc, animated: true)
     }
     

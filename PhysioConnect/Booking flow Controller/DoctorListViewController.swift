@@ -19,6 +19,12 @@ final class DoctorListViewController: UIViewController {
     private var isSearching = false
         
     var activeFilters = Filters()
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        doctorListView.layoutHeaderIfNeeded()   // IMPORTANT!
+    }
+
 
     // MARK: - Load View
     override func loadView() {
@@ -127,19 +133,34 @@ final class DoctorListViewController: UIViewController {
     }
     
     @objc private func openFilters() {
+        // HIDE TAB BAR
+        self.tabBarController?.tabBar.isHidden = true
+
         let vc = FiltersOverlayViewController()
         vc.selectedFilters = activeFilters
 
         vc.onApply = { [weak self] newFilters in
             guard let self = self else { return }
+
             self.activeFilters = newFilters
             self.applyFilters()
+
+            // SHOW TAB BAR AGAIN
+            self.tabBarController?.tabBar.isHidden = false
         }
 
+        // ALSO SHOW TAB BAR AGAIN WHEN USER CANCELS
         vc.modalPresentationStyle = .overCurrentContext
         vc.modalTransitionStyle = .crossDissolve
+
+        // When closing the filter without "Apply"
+        vc.onDismiss = { [weak self] in
+            self?.tabBarController?.tabBar.isHidden = false
+        }
+
         present(vc, animated: false)
     }
+
     
     private func applyFilters() {
         filteredDoctors = doctors

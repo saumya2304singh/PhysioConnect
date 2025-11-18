@@ -56,7 +56,7 @@ final class MainTabBarController: UITabBarController {
             tag: 0
         )
 
-        let appVC = UIViewController()
+        let appVC = AppointmentsTabViewController()
         appVC.view.backgroundColor = .white
         let appNav = UINavigationController(rootViewController: appVC)
         appNav.tabBarItem = UITabBarItem(

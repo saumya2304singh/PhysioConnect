@@ -121,21 +121,44 @@ final class DoctorListView: UIView {
     private func setupTableHeaderContents() {
         tableView.tableHeaderView = headerContentView
         headerContentView.translatesAutoresizingMaskIntoConstraints = false
+        headerContentView.widthAnchor.constraint(equalTo: tableView.widthAnchor).isActive = true
+
         headerContentView.backgroundColor = .clear
+        headerContentView.layoutIfNeeded()
+
 
         // Custom location icon from assets
         locationIcon.image = UIImage(named: "location_icon") ?? UIImage(systemName: "location.fill")
         locationIcon.tintColor = UIColor(hex: "1E6EF7")
 
         // Search bar
+        //let searchBar = UISearchBar()
         searchBar.searchBarStyle = .minimal
         searchBar.placeholder = "Search physiotherapists..."
+
+        // REMOVE SYSTEM BACKGROUND (VERY IMPORTANT)
+        searchBar.setBackgroundImage(UIImage(), for: .any, barMetrics: .default)
         searchBar.backgroundColor = .clear
-        searchBar.searchTextField.backgroundColor = .white
-        searchBar.searchTextField.layer.cornerRadius = 12
-        searchBar.searchTextField.clipsToBounds = true
+
+        // CUSTOMIZE INNER TEXT FIELD
+        let textField = searchBar.searchTextField
+        textField.backgroundColor = .white
+        textField.layer.borderWidth = 1
+        textField.layer.borderColor = UIColor(hex: "D4E3FE").cgColor
+        textField.layer.cornerRadius = 12
+        
+        textField.clipsToBounds = true
+
+        // Optional: placeholder color
+        textField.attributedPlaceholder = NSAttributedString(
+            string: "Search physiotherapists...",
+            attributes: [.foregroundColor: UIColor.systemGray]
+        )
+
+        // Hugging priority
         searchBar.setContentHuggingPriority(.defaultLow, for: .horizontal)
         filterButton.setContentHuggingPriority(.required, for: .horizontal)
+
 
 
         // Filter button
@@ -166,7 +189,7 @@ final class DoctorListView: UIView {
         }
 
         NSLayoutConstraint.activate([
-            // Location row
+            // MARK: - Location row
             locationIcon.topAnchor.constraint(equalTo: headerContentView.topAnchor, constant: 8),
             locationIcon.leadingAnchor.constraint(equalTo: headerContentView.leadingAnchor, constant: 16),
             locationIcon.widthAnchor.constraint(equalToConstant: 16),
@@ -175,24 +198,23 @@ final class DoctorListView: UIView {
             cityLabel.centerYAnchor.constraint(equalTo: locationIcon.centerYAnchor),
             cityLabel.leadingAnchor.constraint(equalTo: locationIcon.trailingAnchor, constant: 6),
 
-            // Filter button
-            filterButton.topAnchor.constraint(equalTo: locationIcon.bottomAnchor, constant: 12),
+            // MARK: - Search bar (directly under location row)
+            searchBar.topAnchor.constraint(equalTo: locationIcon.bottomAnchor, constant: 12),
+            searchBar.leadingAnchor.constraint(equalTo: headerContentView.leadingAnchor, constant: 16),
+            searchBar.heightAnchor.constraint(equalToConstant: 44),
+
+            // Filter button aligned with search bar, 10pt away, trailing 16
+            filterButton.centerYAnchor.constraint(equalTo: searchBar.centerYAnchor),
+            filterButton.leadingAnchor.constraint(equalTo: searchBar.trailingAnchor, constant: 10),
             filterButton.trailingAnchor.constraint(equalTo: headerContentView.trailingAnchor, constant: -16),
             filterButton.widthAnchor.constraint(equalToConstant: 32),
             filterButton.heightAnchor.constraint(equalToConstant: 32),
 
-            // Search bar fills space, 16 from left, 10 from filter button
-            searchBar.leadingAnchor.constraint(equalTo: headerContentView.leadingAnchor, constant: 16),
-            searchBar.trailingAnchor.constraint(equalTo: filterButton.leadingAnchor, constant: -10),
-            searchBar.centerYAnchor.constraint(equalTo: filterButton.centerYAnchor),
-            searchBar.heightAnchor.constraint(equalToConstant: 44),
-            //searchBar.widthAnchor.constraint(equalToConstant: 250),
-
-            // Select date label
+            // MARK: - Select date label
             selectDateLabel.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 16),
             selectDateLabel.leadingAnchor.constraint(equalTo: headerContentView.leadingAnchor, constant: 16),
 
-            // Date / time pills
+            // MARK: - Date / Time pills
             datePill.topAnchor.constraint(equalTo: selectDateLabel.bottomAnchor, constant: 8),
             datePill.leadingAnchor.constraint(equalTo: headerContentView.leadingAnchor, constant: 16),
             datePill.heightAnchor.constraint(equalToConstant: 30),
@@ -203,14 +225,15 @@ final class DoctorListView: UIView {
             timePill.heightAnchor.constraint(equalToConstant: 30),
             timePill.widthAnchor.constraint(equalToConstant: 100),
 
-            calendarButton.leadingAnchor.constraint(equalTo: timePill.trailingAnchor, constant: 8),
-            calendarButton.trailingAnchor.constraint(equalTo: headerContentView.trailingAnchor, constant: -16),
+            // Calendar button with trailing 16
             calendarButton.centerYAnchor.constraint(equalTo: datePill.centerYAnchor),
             calendarButton.widthAnchor.constraint(equalToConstant: 32),
             calendarButton.heightAnchor.constraint(equalToConstant: 32),
+            calendarButton.trailingAnchor.constraint(equalTo: headerContentView.trailingAnchor, constant: -16),
 
             calendarButton.bottomAnchor.constraint(equalTo: headerContentView.bottomAnchor, constant: -16)
         ])
+
     }
 
     // Resize header for AutoLayout

@@ -61,7 +61,8 @@ final class AppointmentDetailsViewController: UIViewController {
             "\(df.string(from: appointment.date)), \(tf.string(from: appointment.date))"
         
         detailsView.locationValueLabel.text = appointment.location
-        detailsView.statusValueLabel.text = appointment.status
+        detailsView.statusValueLabel.text = appointment.status.rawValue
+
         
         // Load saved session notes
         detailsView.notesTextView.text =

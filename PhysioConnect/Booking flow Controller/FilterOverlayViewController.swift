@@ -7,11 +7,11 @@ import UIKit
 
 final class FiltersOverlayViewController: UIViewController {
 
-    // MARK: - External communication
     var selectedFilters = Filters()
     var onApply: ((Filters) -> Void)?
+    var onDismiss: (() -> Void)?
 
-    // MARK: - Internal state
+
     private var selectedDistance: Double = 15
     private var selectedRating: Int = 0
 
@@ -19,80 +19,120 @@ final class FiltersOverlayViewController: UIViewController {
     private var genderButtons: [(String, UIButton)] = []
     private var ratingButtons: [UIButton] = []
 
-    // MARK: - UI Elements
+    // MARK: TRUE UI ELEMENTS
     private let dimView = UIView()
+    private let sheetView = UIView()
+
+    private let headerView = UIView()
+    private let headerTitle = UILabel()
+    private let removeButton = UIButton(type: .system)
+
     private let scrollView = UIScrollView()
     private let contentView = UIView()
 
+    private let bottomButtons = UIStackView()
+
     private let distanceLabel = UILabel()
     private let distanceSlider = UISlider()
-
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         buildUI()
-        applySavedFilters()
     }
 
-    // MARK: - UI Construction
     private func buildUI() {
 
-        // ====== Dim Background ======
-        dimView.backgroundColor = UIColor.black.withAlphaComponent(0.45)
-        dimView.frame = view.bounds
-        dimView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(close)))
+        // ==========================
+        // 1) DIM BACKGROUND
+        // ==========================
         view.addSubview(dimView)
-
-        // ====== Scrollable Bottom Sheet ======
-        scrollView.backgroundColor = UIColor(hex: "E3F0FF")
-        scrollView.layer.cornerRadius = 36
-        scrollView.clipsToBounds = true
-        view.addSubview(scrollView)
-
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        dimView.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        dimView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            scrollView.topAnchor.constraint(equalTo: view.centerYAnchor, constant: -40)
+            dimView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            dimView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            dimView.topAnchor.constraint(equalTo: view.topAnchor),
+            dimView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        dimView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(close)))
+
+
+        // ==========================
+        // 2) FIXED SHEET VIEW
+        // ==========================
+        view.addSubview(sheetView)
+        sheetView.backgroundColor = UIColor(hex: "E3F0FF")
+        sheetView.layer.cornerRadius = 32
+        sheetView.clipsToBounds = true
+        sheetView.translatesAutoresizingMaskIntoConstraints = false
+
+        NSLayoutConstraint.activate([
+            sheetView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            sheetView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            sheetView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            sheetView.topAnchor.constraint(equalTo: view.centerYAnchor, constant: -40)
         ])
 
-        // ContentView inside scrollView
+
+        // ==========================
+        // 3) FIXED HEADER
+        // ==========================
+        sheetView.addSubview(headerView)
+        headerView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            headerView.leadingAnchor.constraint(equalTo: sheetView.leadingAnchor),
+            headerView.trailingAnchor.constraint(equalTo: sheetView.trailingAnchor),
+            headerView.topAnchor.constraint(equalTo: sheetView.topAnchor),
+            headerView.heightAnchor.constraint(equalToConstant: 70)
+        ])
+
+        headerTitle.text = "Filters"
+        headerTitle.font = .boldSystemFont(ofSize: 22)
+
+        removeButton.setTitle("remove", for: .normal)
+        removeButton.addTarget(self, action: #selector(removeFilters), for: .touchUpInside)
+
+        [headerTitle, removeButton].forEach { headerView.addSubview($0); $0.translatesAutoresizingMaskIntoConstraints = false }
+
+        NSLayoutConstraint.activate([
+            headerTitle.centerXAnchor.constraint(equalTo: headerView.centerXAnchor),
+            headerTitle.centerYAnchor.constraint(equalTo: headerView.centerYAnchor, constant: 5),
+
+            removeButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -16),
+            removeButton.centerYAnchor.constraint(equalTo: headerTitle.centerYAnchor)
+        ])
+
+
+        // ==========================
+        // 4) SCROLLVIEW (ONLY MIDDLE)
+        // ==========================
+        sheetView.addSubview(scrollView)
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.showsVerticalScrollIndicator = true
+
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: sheetView.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: sheetView.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: sheetView.bottomAnchor, constant: -100)
+        ])
+
         scrollView.addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
             contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
-
             contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
         ])
 
-        // ====== Title ======
-        let title = UILabel()
-        title.text = "Filters"
-        title.font = .boldSystemFont(ofSize: 22)
-        title.textAlignment = .center
 
-        let removeBtn = UIButton(type: .system)
-        removeBtn.setTitle("remove", for: .normal)
-        removeBtn.addTarget(self, action: #selector(removeFilters), for: .touchUpInside)
-
-        contentView.addSubview(title)
-        contentView.addSubview(removeBtn)
-
-        title.translatesAutoresizingMaskIntoConstraints = false
-        removeBtn.translatesAutoresizingMaskIntoConstraints = false
-
-        NSLayoutConstraint.activate([
-            title.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            title.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-
-            removeBtn.centerYAnchor.constraint(equalTo: title.centerYAnchor),
-            removeBtn.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
-        ])
-
-        // ====== Cards ======
+        // ==========================
+        // 5) CARDS
+        // ==========================
         let specialityCard = makeCardSection(
             title: "Speciality",
             items: ["Knee Physiotherapy", "Neck Physiotherapy", "Shoulder Physiotherapy"],
@@ -107,21 +147,14 @@ final class FiltersOverlayViewController: UIViewController {
 
         let distanceCard = makeDistanceCard()
         let ratingCard = makeRatingCard()
-        let buttonsStack = makeButtons()
 
-        // Add all sections to contentView
-        [specialityCard, genderCard, distanceCard, ratingCard, buttonsStack]
-            .forEach { contentView.addSubview($0) }
-
-        specialityCard.translatesAutoresizingMaskIntoConstraints = false
-        genderCard.translatesAutoresizingMaskIntoConstraints = false
-        distanceCard.translatesAutoresizingMaskIntoConstraints = false
-        ratingCard.translatesAutoresizingMaskIntoConstraints = false
-        buttonsStack.translatesAutoresizingMaskIntoConstraints = false
+        [specialityCard, genderCard, distanceCard, ratingCard].forEach {
+            contentView.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
 
         NSLayoutConstraint.activate([
-
-            specialityCard.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 25),
+            specialityCard.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             specialityCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             specialityCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
 
@@ -137,14 +170,47 @@ final class FiltersOverlayViewController: UIViewController {
             ratingCard.leadingAnchor.constraint(equalTo: specialityCard.leadingAnchor),
             ratingCard.trailingAnchor.constraint(equalTo: specialityCard.trailingAnchor),
 
-            buttonsStack.topAnchor.constraint(equalTo: ratingCard.bottomAnchor, constant: 24),
-            buttonsStack.leadingAnchor.constraint(equalTo: specialityCard.leadingAnchor),
-            buttonsStack.trailingAnchor.constraint(equalTo: specialityCard.trailingAnchor),
-            buttonsStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
+            ratingCard.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -40)
+        ])
+
+
+        // ==========================
+        // 6) FIXED BOTTOM BUTTONS
+        // ==========================
+        sheetView.addSubview(bottomButtons)
+        bottomButtons.axis = .horizontal
+        bottomButtons.spacing = 20
+        bottomButtons.distribution = .fillEqually
+        bottomButtons.translatesAutoresizingMaskIntoConstraints = false
+
+        let cancel = UIButton(type: .system)
+        cancel.setTitle("Cancel", for: .normal)
+        cancel.backgroundColor = .white
+        cancel.setTitleColor(.black, for: .normal)
+        cancel.layer.cornerRadius = 22
+        cancel.addTarget(self, action: #selector(close), for: .touchUpInside)
+
+        let apply = UIButton(type: .system)
+        apply.setTitle("Apply", for: .normal)
+        apply.backgroundColor = UIColor(hex: "1E6EF7")
+        apply.setTitleColor(.white, for: .normal)
+        apply.layer.cornerRadius = 22
+        apply.addTarget(self, action: #selector(applyFilters), for: .touchUpInside)
+
+        bottomButtons.addArrangedSubview(cancel)
+        bottomButtons.addArrangedSubview(apply)
+
+        NSLayoutConstraint.activate([
+            bottomButtons.leadingAnchor.constraint(equalTo: sheetView.leadingAnchor, constant: 20),
+            bottomButtons.trailingAnchor.constraint(equalTo: sheetView.trailingAnchor, constant: -20),
+            bottomButtons.bottomAnchor.constraint(equalTo: sheetView.bottomAnchor, constant: -20),
+            bottomButtons.heightAnchor.constraint(equalToConstant: 46)
         ])
     }
 
-    // MARK: - Card Builders
+    // ============================================================
+    // MARK: CARD BUILDERS (unchanged from your file)
+    // ============================================================
     private func baseCard() -> UIView {
         let v = UIView()
         v.backgroundColor = .white
@@ -155,13 +221,11 @@ final class FiltersOverlayViewController: UIViewController {
     private func makeCardSection(title: String,
                                  items: [String],
                                  storage: inout [(String, UIButton)]) -> UIView {
-
         let card = baseCard()
 
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = .boldSystemFont(ofSize: 16)
-
         card.addSubview(titleLabel)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -173,16 +237,14 @@ final class FiltersOverlayViewController: UIViewController {
         var previous: UIView = titleLabel
 
         for item in items {
-
             let label = UILabel()
             label.text = item
             label.font = .systemFont(ofSize: 15)
 
             let btn = UIButton(type: .custom)
             btn.layer.cornerRadius = 10
-            btn.layer.borderColor = UIColor.lightGray.cgColor
             btn.layer.borderWidth = 1
-            btn.backgroundColor = .white
+            btn.layer.borderColor = UIColor.lightGray.cgColor
             btn.addTarget(self, action: #selector(toggleOption(_:)), for: .touchUpInside)
 
             card.addSubview(label)
@@ -210,7 +272,6 @@ final class FiltersOverlayViewController: UIViewController {
     }
 
     private func makeDistanceCard() -> UIView {
-
         let card = baseCard()
 
         let title = UILabel()
@@ -222,15 +283,14 @@ final class FiltersOverlayViewController: UIViewController {
         distanceLabel.textColor = .darkGray
 
         distanceSlider.minimumValue = 1
-        distanceSlider.maximumValue = 15
+        distanceSlider.maximumValue = 50
         distanceSlider.value = Float(selectedDistance)
         distanceSlider.addTarget(self, action: #selector(distanceChanged), for: .valueChanged)
 
-        [title, distanceLabel, distanceSlider].forEach { card.addSubview($0) }
-
-        title.translatesAutoresizingMaskIntoConstraints = false
-        distanceLabel.translatesAutoresizingMaskIntoConstraints = false
-        distanceSlider.translatesAutoresizingMaskIntoConstraints = false
+        [title, distanceLabel, distanceSlider].forEach {
+            card.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
 
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
@@ -240,8 +300,8 @@ final class FiltersOverlayViewController: UIViewController {
             distanceLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
 
             distanceSlider.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 14),
-            distanceSlider.leadingAnchor.constraint(equalTo: title.leadingAnchor),
-            distanceSlider.trailingAnchor.constraint(equalTo: distanceLabel.trailingAnchor),
+            distanceSlider.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            distanceSlider.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
             distanceSlider.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16)
         ])
 
@@ -255,8 +315,8 @@ final class FiltersOverlayViewController: UIViewController {
         title.text = "Ratings"
         title.font = .boldSystemFont(ofSize: 16)
         card.addSubview(title)
-
         title.translatesAutoresizingMaskIntoConstraints = false
+
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
             title.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16)
@@ -273,7 +333,6 @@ final class FiltersOverlayViewController: UIViewController {
             card.addSubview(star)
 
             star.translatesAutoresizingMaskIntoConstraints = false
-
             NSLayoutConstraint.activate([
                 star.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 14),
                 star.widthAnchor.constraint(equalToConstant: 26),
@@ -294,33 +353,7 @@ final class FiltersOverlayViewController: UIViewController {
         return card
     }
 
-    private func makeButtons() -> UIStackView {
-        let cancel = UIButton(type: .system)
-        cancel.setTitle("Cancel", for: .normal)
-        cancel.backgroundColor = .white
-        cancel.setTitleColor(.black, for: .normal)
-        cancel.layer.cornerRadius = 22
-        cancel.addTarget(self, action: #selector(close), for: .touchUpInside)
-
-        let apply = UIButton(type: .system)
-        apply.setTitle("Apply", for: .normal)
-        apply.backgroundColor = UIColor(hex: "1E6EF7")
-        apply.setTitleColor(.white, for: .normal)
-        apply.layer.cornerRadius = 22
-        apply.addTarget(self, action: #selector(applyFilters), for: .touchUpInside)
-
-        let stack = UIStackView(arrangedSubviews: [cancel, apply])
-        stack.axis = .horizontal
-        stack.spacing = 20
-        stack.distribution = .fillEqually
-
-        cancel.heightAnchor.constraint(equalToConstant: 46).isActive = true
-        apply.heightAnchor.constraint(equalToConstant: 46).isActive = true
-
-        return stack
-    }
-
-    // MARK: - Actions
+    // MARK: Action Handlers
     @objc private func toggleOption(_ sender: UIButton) {
         sender.isSelected.toggle()
         sender.backgroundColor = sender.isSelected ? UIColor(hex: "1E6EF7") : .white
@@ -347,22 +380,18 @@ final class FiltersOverlayViewController: UIViewController {
         selectedFilters.minRating = selectedRating
 
         onApply?(selectedFilters)
+        onDismiss?()
         dismiss(animated: false)
     }
 
     @objc private func removeFilters() {
         onApply?(Filters())
+        onDismiss?()
         dismiss(animated: false)
     }
-    
 
     @objc private func close() {
+        onDismiss?()
         dismiss(animated: false)
     }
-
-    // MARK: - Restore Previous Selections
-    private func applySavedFilters() {
-        // TODO: integrate previous selection if needed
-    }
 }
-
