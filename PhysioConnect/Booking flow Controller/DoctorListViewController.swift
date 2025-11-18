@@ -6,8 +6,12 @@
 import UIKit
 import CoreLocation
 
-final class DoctorListViewController: UIViewController {
 
+final class DoctorListViewController: UIViewController {
+    
+    // Callback up to Home with final booked doctor + date
+    var onBookingComplete: ((Doctor, Date) -> Void)?
+    
     private let doctorListView = DoctorListView()
 
     private var doctors: [Doctor] = []
@@ -15,9 +19,6 @@ final class DoctorListViewController: UIViewController {
     private var isSearching = false
         
     var activeFilters = Filters()
-    
-
-
 
     // MARK: - Load View
     override func loadView() {
@@ -28,11 +29,10 @@ final class DoctorListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.hidesBackButton = true
+        
         doctorListView.tableView.dataSource = self
         doctorListView.tableView.delegate = self
         doctorListView.searchBar.delegate = self
-        
-        navigationItem.hidesBackButton = true
 
         setupLocationUpdates()
         fetchDoctors()
@@ -41,7 +41,6 @@ final class DoctorListViewController: UIViewController {
         doctorListView.backButton.addTarget(self, action: #selector(goBack), for: .touchUpInside)
         doctorListView.datePicker.addTarget(self, action: #selector(dateSelected(_:)), for: .valueChanged)
         doctorListView.filterButton.addTarget(self, action: #selector(openFilters), for: .touchUpInside)
-
     }
 
     // ===========================================================
@@ -53,9 +52,7 @@ final class DoctorListViewController: UIViewController {
                 let rows = try await SupabaseService.shared.fetchPhysiotherapists()
 
                 let mapped: [Doctor] = rows.map { row in
-
                     let feeString = "\(row.feePerHour ?? 0)"
-
                     return Doctor(
                         id: row.id,
                         name: row.name,
@@ -70,7 +67,6 @@ final class DoctorListViewController: UIViewController {
                     )
                 }
 
-                // Update distance if location is already known
                 if let loc = LocationService.shared.lastLocation {
                     var updated = mapped
                     for i in updated.indices {
@@ -106,7 +102,6 @@ final class DoctorListViewController: UIViewController {
 
             guard let loc = location else { return }
 
-            // Update distances
             for i in self.doctors.indices {
                 self.doctors[i].updateDistance(from: loc)
             }
@@ -121,7 +116,7 @@ final class DoctorListViewController: UIViewController {
     }
 
     // ===========================================================
-    // MARK: - CALENDAR
+    // MARK: - CALENDAR & FILTERS
     // ===========================================================
     @objc private func openCalendar() {
         doctorListView.showDatePicker()
@@ -133,8 +128,7 @@ final class DoctorListViewController: UIViewController {
     
     @objc private func openFilters() {
         let vc = FiltersOverlayViewController()
-
-        vc.selectedFilters = activeFilters   // pass saved filters
+        vc.selectedFilters = activeFilters
 
         vc.onApply = { [weak self] newFilters in
             guard let self = self else { return }
@@ -150,20 +144,17 @@ final class DoctorListViewController: UIViewController {
     private func applyFilters() {
         filteredDoctors = doctors
 
-        // Filter by specialities
         if !activeFilters.specialities.isEmpty {
             filteredDoctors = filteredDoctors.filter {
                 activeFilters.specialities.contains($0.specialization)
             }
         }
 
-        // Filter by distance
         filteredDoctors = filteredDoctors.filter {
             let dist = Double($0.distance.replacingOccurrences(of: " km", with: "")) ?? 0
             return dist <= activeFilters.maxDistance
         }
 
-        // Filter by rating
         if activeFilters.minRating > 0 {
             filteredDoctors = filteredDoctors.filter {
                 Int($0.rating) >= activeFilters.minRating
@@ -182,15 +173,7 @@ final class DoctorListViewController: UIViewController {
         t.dateFormat = "h:mm a"
         doctorListView.timePill.text = t.string(from: sender.date)
     }
-    
-    
-
-
-
-
 }
-
-    
 
 // ===========================================================
 // MARK: - TABLE VIEW
@@ -221,10 +204,13 @@ extension DoctorListViewController: UITableViewDataSource, UITableViewDelegate {
 
         let vc = PhysiotherapistDetailViewController()
         vc.configureWith(doctor: doctor)
+
+        vc.onBookingComplete = { [weak self] doctor, date in
+            self?.onBookingComplete?(doctor, date)
+        }
+
         navigationController?.pushViewController(vc, animated: true)
     }
-    
-
 }
 
 // ===========================================================

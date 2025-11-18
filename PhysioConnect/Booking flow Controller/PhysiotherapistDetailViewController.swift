@@ -2,24 +2,19 @@
 //  PhysiotherapistDetailViewController.swift
 //  PhysioConnect
 //
-//  Created by user@8 on 13/11/25.
-//
-//
-//  PhysiotherapistDetailViewController.swift
-//  PhysioConnect
-//
 
 import UIKit
 
 final class PhysiotherapistDetailViewController: UIViewController,
                                                 UITableViewDataSource,
                                                 UITableViewDelegate {
-
+    
+    // Callback up to DoctorList → Home
+    var onBookingComplete: ((Doctor, Date) -> Void)?
+    
     private let detailView = PhysiotherapistDetailView()
 
-    // Full detail model loaded from Supabase
     private var model: PhysiotherapistDetailModel?
-
     private var isExpanded = false
     private var expandedReviewIndex: Int? = nil
 
@@ -45,7 +40,6 @@ final class PhysiotherapistDetailViewController: UIViewController,
         detailView.reviewsTableView.delegate = self
         detailView.reviewsTableView.dataSource = self
 
-        // Buttons
         detailView.seeMoreButton.addTarget(self, action: #selector(toggleAboutSection), for: .touchUpInside)
         detailView.bookButton.addTarget(self, action: #selector(bookAppointmentTapped), for: .touchUpInside)
         detailView.backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
@@ -55,7 +49,6 @@ final class PhysiotherapistDetailViewController: UIViewController,
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Safety: ensure height is correct after auto layout
         updateReviewsTableHeight()
     }
 
@@ -68,7 +61,6 @@ final class PhysiotherapistDetailViewController: UIViewController,
                     return
                 }
 
-                // Map Supabase row → app model
                 self.model = PhysiotherapistDetailModel(
                     id: row.id,
                     name: row.name,
@@ -116,7 +108,6 @@ final class PhysiotherapistDetailViewController: UIViewController,
     private func configureView() {
         guard let model = model else { return }
 
-        // Doctor card
         let cardDoctor = Doctor(
             id: model.id,
             name: model.name,
@@ -131,16 +122,15 @@ final class PhysiotherapistDetailViewController: UIViewController,
         )
         detailView.doctorCard.configure(with: cardDoctor)
 
-        // Stats using StatView
         detailView.patientsStat.setValues(
             top: model.patientsCount,
             bottom: "patients"
         )
 
-        // Strip " years" to show as e.g. "10+"
         let expText: String
         if model.experience.contains("year") {
-            expText = model.experience.replacingOccurrences(of: " years", with: "+")
+            expText = model.experience
+                .replacingOccurrences(of: " years", with: "+")
                 .replacingOccurrences(of: " year", with: "+")
         } else {
             expText = model.experience
@@ -150,7 +140,6 @@ final class PhysiotherapistDetailViewController: UIViewController,
             bottom: "experience"
         )
 
-        // About text with paragraph style
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = 6
         paragraph.paragraphSpacing = 4
@@ -166,7 +155,6 @@ final class PhysiotherapistDetailViewController: UIViewController,
         )
         detailView.aboutText.numberOfLines = 3
 
-        // Reload reviews + fix height
         detailView.reviewsTableView.reloadData()
         updateReviewsTableHeight()
     }
@@ -184,18 +172,14 @@ final class PhysiotherapistDetailViewController: UIViewController,
 
     // MARK: - Update reviews table height
     private func updateReviewsTableHeight() {
-        // Make sure cells are laid out
         detailView.reviewsTableView.layoutIfNeeded()
-
         let height = detailView.reviewsTableView.contentSize.height
         detailView.reviewsTableHeightConstraint.constant = height
-
         view.layoutIfNeeded()
     }
 
     // MARK: - Table Data Source
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // Show at most 3
         return min(model?.reviews.count ?? 0, 3)
     }
 
@@ -239,11 +223,15 @@ final class PhysiotherapistDetailViewController: UIViewController,
 
     @objc private func bookAppointmentTapped() {
         let vc = DateAndTimeSelectionViewController()
-        vc.passedDoctor = convertToDoctor()   // ✅ correct place to convert
+        vc.passedDoctor = convertToDoctor()
+        
+        vc.onBookingComplete = { [weak self] doctor, date in
+            self?.onBookingComplete?(doctor, date)
+        }
+        
         navigationController?.pushViewController(vc, animated: true)
     }
 
-    
     private func convertToDoctor() -> Doctor {
         guard let model = model else {
             fatalError("Model missing before navigating!")
@@ -262,8 +250,4 @@ final class PhysiotherapistDetailViewController: UIViewController,
             distance: model.distance
         )
     }
-
-    
-    
-
 }

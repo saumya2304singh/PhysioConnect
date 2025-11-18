@@ -9,24 +9,25 @@ import UIKit
 
 final class SuccessAppointmentViewController: UIViewController {
     
-    // Passed in
+    // Callback back to ConfirmVC with doctor & date
+    var onBookingComplete: ((Doctor, Date) -> Void)?
+    
+    // Passed-in values
     var doctor: Doctor!
     var appointmentDate: Date!
     var userLocation: String = ""
     
-    // Dimmed background
+    // MARK: - UI Elements
     private let dimView: UIView = {
         let v = UIView()
         v.backgroundColor = UIColor.black.withAlphaComponent(0.35)
         return v
     }()
     
-    // White popup card
     private let popupView: UIView = {
         let v = UIView()
         v.backgroundColor = .white
         v.layer.cornerRadius = 28
-        v.layer.masksToBounds = false
         v.layer.shadowColor = UIColor.black.cgColor
         v.layer.shadowOpacity = 0.15
         v.layer.shadowRadius = 12
@@ -34,11 +35,10 @@ final class SuccessAppointmentViewController: UIViewController {
         return v
     }()
     
-    // Blue circle icon
     private let iconContainer: UIView = {
         let v = UIView()
         v.backgroundColor = UIColor(hex: "1E6EF7")
-        v.layer.cornerRadius = 44 / 2
+        v.layer.cornerRadius = 32
         v.clipsToBounds = true
         return v
     }()
@@ -79,20 +79,15 @@ final class SuccessAppointmentViewController: UIViewController {
     
     
     // MARK: - Lifecycle
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        // Transparent background so underlying screen is visible
         view.backgroundColor = .clear
-        
         setupLayout()
         fillContent()
     }
     
     
     // MARK: - Layout
-    
     private func setupLayout() {
         view.addSubview(dimView)
         view.addSubview(popupView)
@@ -111,14 +106,12 @@ final class SuccessAppointmentViewController: UIViewController {
             popupView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24)
         ])
         
-        // Icon
         popupView.addSubview(iconContainer)
         iconContainer.translatesAutoresizingMaskIntoConstraints = false
         
         iconContainer.addSubview(iconImageView)
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         
-        // Title, message, button
         [titleLabel, messageLabel, doneButton].forEach {
             popupView.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
@@ -154,8 +147,7 @@ final class SuccessAppointmentViewController: UIViewController {
     }
     
     
-    // MARK: - Content
-    
+    // MARK: - Fill Content
     private func fillContent() {
         guard let doctor = doctor, let date = appointmentDate else { return }
         
@@ -165,23 +157,43 @@ final class SuccessAppointmentViewController: UIViewController {
         let tf = DateFormatter()
         tf.dateFormat = "h:mm a"
         
-        let dateString = df.string(from: date)
-        let timeString = tf.string(from: date)
-        
         messageLabel.text =
         """
         Your appointment with \(doctor.name)
         at \(userLocation)
-        is confirmed for \(dateString),
-        at \(timeString).
+        is confirmed for \(df.string(from: date)),
+        at \(tf.string(from: date)).
         """
     }
     
     
-    // MARK: - Actions
-    
+    // MARK: - Done Button Action
     @objc private func doneTapped() {
-        // Dismiss popup and return to root booking screen
-        dismiss(animated: true)
+
+        dismiss(animated: true) { [weak self] in
+            guard let self = self else { return }
+
+            // Send booking info up callback
+            if let doctor = self.doctor, let date = self.appointmentDate {
+                self.onBookingComplete?(doctor, date)
+            }
+
+            // Get the tab bar (since it's the new root)
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let tabBar = window.rootViewController as? MainTabBarController {
+
+                // Switch to HOME tab (index 0)
+                tabBar.selectedIndex = 0
+
+                // Also pop navigation inside Home tab
+                if let homeNav = tabBar.viewControllers?[0] as? UINavigationController {
+                    homeNav.popToRootViewController(animated: false)
+                }
+            }
+        }
     }
+
+
+
 }

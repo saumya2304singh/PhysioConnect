@@ -10,6 +10,9 @@ import CoreLocation
 
 final class DateAndTimeSelectionViewController: UIViewController, CLLocationManagerDelegate {
     
+    // Callback up to DoctorDetail → DoctorList → Home
+    var onBookingComplete: ((Doctor, Date) -> Void)?
+    
     var passedDoctor: Doctor!
     var selectedDate: Date = Date()
     var selectedTime: Date = Date()
@@ -50,8 +53,8 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
 
     // MARK: - View Load
     override func viewDidLoad() {
-        navigationItem.hidesBackButton = true
         super.viewDidLoad()
+        navigationItem.hidesBackButton = true
 
         view.backgroundColor = UIColor(hex: "E3F0FF")
 
@@ -67,7 +70,8 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
         locationManager.startUpdatingLocation()
     }
 
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_ manager: CLLocationManager,
+                         didUpdateLocations locations: [CLLocation]) {
 
         guard let loc = locations.first else { return }
 
@@ -87,7 +91,6 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
     // MARK: - UI Setup
     private func setupUI() {
         
-        // Back Button
         backButton.setImage(UIImage(systemName: "chevron.left"), for: .normal)
         backButton.tintColor = .black
         backButton.addTarget(self, action: #selector(backTapped), for: .touchUpInside)
@@ -106,10 +109,6 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
             titleLabel.centerYAnchor.constraint(equalTo: backButton.centerYAnchor)
         ])
         
-        
-        // ---------------------------
-        // WHITE CONTAINER CARD
-        // ---------------------------
         container.backgroundColor = .white
         container.layer.cornerRadius = 20
         container.layer.shadowOpacity = 0.15
@@ -125,10 +124,6 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
             container.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])
         
-        
-        // ---------------------------
-        // DATE PICKER
-        // ---------------------------
         calendarPicker.datePickerMode = .date
         calendarPicker.preferredDatePickerStyle = .inline
         calendarPicker.addTarget(self, action: #selector(dateChanged(_:)), for: .valueChanged)
@@ -136,17 +131,12 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
         container.addSubview(calendarPicker)
         calendarPicker.translatesAutoresizingMaskIntoConstraints = false
         
-        
-        // ---------------------------
-        // TIME PICKER
-        // ---------------------------
         timePicker.datePickerMode = .time
         timePicker.preferredDatePickerStyle = .compact
         timePicker.addTarget(self, action: #selector(timeChanged(_:)), for: .valueChanged)
 
         container.addSubview(timePicker)
         timePicker.translatesAutoresizingMaskIntoConstraints = false
-        
         
         NSLayoutConstraint.activate([
             calendarPicker.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
@@ -159,10 +149,6 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
             timePicker.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16)
         ])
         
-        
-        // ---------------------------
-        // CONFIRM BUTTON
-        // ---------------------------
         view.addSubview(confirmButton)
         confirmButton.translatesAutoresizingMaskIntoConstraints = false
         confirmButton.addTarget(self, action: #selector(confirmTapped), for: .touchUpInside)
@@ -196,14 +182,18 @@ final class DateAndTimeSelectionViewController: UIViewController, CLLocationMana
 
         let combined = mergeDateAndTime(date: selectedDate, time: selectedTime)
 
-        let vc = ConfirmAppointmentViewController()
-        vc.doctor = passedDoctor
-        vc.appointmentDate = combined
-        vc.userLocation = currentAddress
-        
-        navigationController?.pushViewController(vc, animated: true)
-    }
+        let confirmVC = ConfirmAppointmentViewController()
+        confirmVC.doctor = passedDoctor
+        confirmVC.appointmentDate = combined
+        confirmVC.userLocation = currentAddress
 
+        // Callback up the chain
+        confirmVC.onBookingComplete = { [weak self] doctor, date in
+            self?.onBookingComplete?(doctor, date)
+        }
+
+        navigationController?.pushViewController(confirmVC, animated: true)
+    }
 
     private func mergeDateAndTime(date: Date, time: Date) -> Date {
         let cal = Calendar.current

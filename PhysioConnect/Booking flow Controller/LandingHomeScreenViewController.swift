@@ -12,18 +12,31 @@ final class LandingHomeScreenViewController: UIViewController {
     // MARK: - Properties
     private var homeView: LandingHomeView!          // View layer
     private var homeModel: LandingHomeModel!        // Model layer
+    private var currentAppointment: AppointmentDetail?
+
 
     // MARK: - Lifecycle
     override func loadView() {
-        // Replace default view with our custom UIView subclass
         homeView = LandingHomeView()
         view = homeView
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         navigationItem.hidesBackButton = true
-        homeView.bookButton.addTarget(self, action: #selector(bookAppointmentTapped), for: .touchUpInside)
+        
+        // Book button → Doctor list
+        homeView.bookButton.addTarget(self,
+                                      action: #selector(bookAppointmentTapped),
+                                      for: .touchUpInside)
+
+        // Initial state: show Book card
+        homeView.showBookAppointmentCard()
+        
+        homeView.onViewDetailsTapped = { [weak self] in
+            self?.openAppointmentDetails()
+        }
 
         
         // MARK: Setup Model Data
@@ -44,7 +57,6 @@ final class LandingHomeScreenViewController: UIViewController {
             ]
         )
 
-        // Configure UI with model
         homeView.configure(with: homeModel)
         
         // Assign delegates
@@ -60,13 +72,50 @@ final class LandingHomeScreenViewController: UIViewController {
         }
 
         // Handle segmented control (week change)
-        homeView.weekSegment.addTarget(self, action: #selector(weekChanged(_:)), for: .valueChanged)
+        homeView.weekSegment.addTarget(self,
+                                       action: #selector(weekChanged(_:)),
+                                       for: .valueChanged)
     }
     
+    // MARK: - Book Appointment
     @objc private func bookAppointmentTapped() {
         let vc = DoctorListViewController()
+        
+        
+        
+        // When booking is finally completed from deep in the flow,
+        // this closure will be called with doctor + date.
+        vc.onBookingComplete = { [weak self] doctor, date in
+            guard let self = self else { return }
+            
+            self.currentAppointment = AppointmentDetail(
+                    id: UUID(),
+                    doctor: doctor,
+                    date: date,
+                    location: "Home Visit",
+                    status: "Confirmed"
+                )
+            self.homeView.updateUpcomingAppointment(
+                doctorName: doctor.name,
+                date: date
+            )
+        }
+        
         navigationController?.pushViewController(vc, animated: true)
     }
+    
+    private func openAppointmentDetails() {
+
+        guard let appt = currentAppointment else {
+            print("❌ No appointment stored yet")
+            return
+        }
+
+        let vc = AppointmentDetailsViewController()
+        vc.appointment = appt                       // Pass the model into the details screen
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
 
 
     // MARK: - Week Segment Change
@@ -77,10 +126,12 @@ final class LandingHomeScreenViewController: UIViewController {
     }
 }
 
+
 // MARK: - UICollectionView Delegate & DataSource
 extension LandingHomeScreenViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: UICollectionView,
+                        numberOfItemsInSection section: Int) -> Int {
         if collectionView == homeView.videoCollectionView {
             return homeModel.videos.count
         } else {
@@ -88,14 +139,23 @@ extension LandingHomeScreenViewController: UICollectionViewDelegate, UICollectio
         }
     }
 
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView,
+                        cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if collectionView == homeView.videoCollectionView {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "VideoCell", for: indexPath) as! VideoCell
+            let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: "VideoCell",
+                for: indexPath
+            ) as! VideoCell
+            
             let video = homeModel.videos[indexPath.row]
             cell.imageView.image = UIImage(named: video.imageName)
             return cell
         } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ArticleCell", for: indexPath) as! ArticleCell
+            let cell = collectionView.dequeueReusableCell(
+                withReuseIdentifier: "ArticleCell",
+                for: indexPath
+            ) as! ArticleCell
+            
             let article = homeModel.articles[indexPath.row]
             cell.imageView.image = UIImage(named: article.imageName)
             cell.title.text = article.title
@@ -103,6 +163,7 @@ extension LandingHomeScreenViewController: UICollectionViewDelegate, UICollectio
         }
     }
 }
+
 
 // MARK: - UITextFieldDelegate (Redeem Popup)
 extension LandingHomeScreenViewController: UITextFieldDelegate {
@@ -122,4 +183,3 @@ extension LandingHomeScreenViewController: UITextFieldDelegate {
         return true
     }
 }
-

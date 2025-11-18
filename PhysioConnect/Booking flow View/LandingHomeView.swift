@@ -19,12 +19,25 @@ final class LandingHomeView: UIView {
     let homeTitle = UILabel()
     let profileButton = UIButton(type: .system)
     
-    // MARK: - Book Appointment Card
+    // MARK: - Appointment Container (holds either Book card or Upcoming card)
+    private let appointmentContainer = UIView()
+    
+    // Book Appointment Card
     let bookCard = UIView()
     let cardImageView = UIImageView(image: UIImage(named: "doc1"))
     let cardTitle = UILabel()
     let cardSubtitle = UILabel()
     let bookButton = UIButton(type: .system)
+    
+    // Upcoming Appointment Card
+    let upcomingCard = UIView()
+    let upcomingTitle = UILabel()
+    let upcomingName = UILabel()
+    let upcomingDate = UILabel()
+    let upcomingButton = UIButton(type: .system)
+    var onViewDetailsTapped: (() -> Void)?
+
+    
     
     // MARK: - Video Exercises
     var videoCollectionView: UICollectionView!
@@ -58,11 +71,32 @@ final class LandingHomeView: UIView {
         // Future dynamic updates can go here
     }
 
+    // MARK: - Public API for cards
+    func showBookAppointmentCard() {
+        bookCard.isHidden = false
+        upcomingCard.isHidden = true
+    }
+    
+    func updateUpcomingAppointment(doctorName: String, date: Date) {
+        // Format date + time
+        let df = DateFormatter()
+        df.dateFormat = "EEEE, dd MMM"
+        let tf = DateFormatter()
+        tf.dateFormat = "h:mm a"
+        
+        upcomingName.text = doctorName
+        upcomingDate.text = "\(df.string(from: date))\n\(tf.string(from: date))"
+        
+        // Toggle visibility
+        bookCard.isHidden = true
+        upcomingCard.isHidden = false
+    }
+
     // MARK: - Setup
     private func setupLayout() {
         setupScrollView()
         setupHeader()
-        setupBookCard()
+        setupAppointmentSection()
         setupVideoSection()
         setupProgressTracker()
         setupRedeemCard()
@@ -128,14 +162,34 @@ extension LandingHomeView {
         ])
     }
     
-    private func setupBookCard() {
-        configureCard(bookCard)
-        [bookCard, cardImageView, cardTitle, cardSubtitle, bookButton].forEach {
-            contentView.addSubview($0)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
+    
 
-        bookCard.layer.cornerRadius = 24
+    // MARK: - Appointment Section (Book + Upcoming stacked)
+    private func setupAppointmentSection() {
+        contentView.addSubview(appointmentContainer)
+        appointmentContainer.translatesAutoresizingMaskIntoConstraints = false
+        upcomingButton.addTarget(self, action: #selector(viewDetailsTapped), for: .touchUpInside)
+
+        
+        NSLayoutConstraint.activate([
+            appointmentContainer.topAnchor.constraint(equalTo: homeTitle.bottomAnchor, constant: 20),
+            appointmentContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            appointmentContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            appointmentContainer.heightAnchor.constraint(equalToConstant: 160)
+        ])
+        
+        // ------- Book Card -------
+        configureCard(bookCard)
+        appointmentContainer.addSubview(bookCard)
+        bookCard.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            bookCard.topAnchor.constraint(equalTo: appointmentContainer.topAnchor),
+            bookCard.leadingAnchor.constraint(equalTo: appointmentContainer.leadingAnchor),
+            bookCard.trailingAnchor.constraint(equalTo: appointmentContainer.trailingAnchor),
+            bookCard.bottomAnchor.constraint(equalTo: appointmentContainer.bottomAnchor)
+        ])
+
         cardImageView.layer.cornerRadius = 24
         cardImageView.contentMode = .scaleAspectFill
         cardImageView.clipsToBounds = true
@@ -153,12 +207,12 @@ extension LandingHomeView {
         bookButton.backgroundColor = UIColor(hex: "3278F6")
         bookButton.layer.cornerRadius = 18
 
-        NSLayoutConstraint.activate([
-            bookCard.topAnchor.constraint(equalTo: homeTitle.bottomAnchor, constant: 20),
-            bookCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            bookCard.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            bookCard.heightAnchor.constraint(equalToConstant: 160),
+        [cardImageView, cardTitle, cardSubtitle, bookButton].forEach {
+            bookCard.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
 
+        NSLayoutConstraint.activate([
             cardImageView.topAnchor.constraint(equalTo: bookCard.topAnchor, constant: 16),
             cardImageView.leadingAnchor.constraint(equalTo: bookCard.leadingAnchor, constant: 16),
             cardImageView.bottomAnchor.constraint(equalTo: bookCard.bottomAnchor, constant: -16),
@@ -176,7 +230,65 @@ extension LandingHomeView {
             bookButton.heightAnchor.constraint(equalToConstant: 36),
             bookButton.widthAnchor.constraint(equalToConstant: 200)
         ])
+        
+        // ------- Upcoming Card (stacked in same container, initially hidden) -------
+        configureCard(upcomingCard)
+        appointmentContainer.addSubview(upcomingCard)
+        upcomingCard.translatesAutoresizingMaskIntoConstraints = false
+        upcomingCard.isHidden = true
+        
+        
+        NSLayoutConstraint.activate([
+            upcomingCard.topAnchor.constraint(equalTo: appointmentContainer.topAnchor),
+            upcomingCard.leadingAnchor.constraint(equalTo: appointmentContainer.leadingAnchor),
+            upcomingCard.trailingAnchor.constraint(equalTo: appointmentContainer.trailingAnchor),
+            upcomingCard.bottomAnchor.constraint(equalTo: appointmentContainer.bottomAnchor)
+        ])
+        
+        upcomingTitle.text = "Upcoming appointment"
+        upcomingTitle.font = .boldSystemFont(ofSize: 20)
+        upcomingTitle.textColor = UIColor.systemGreen
+        
+        upcomingName.font = .systemFont(ofSize: 17, weight: .semibold)
+        upcomingName.textColor = .black
+        
+        upcomingDate.font = .systemFont(ofSize: 15)
+        upcomingDate.numberOfLines = 2
+        upcomingDate.textColor = .darkGray
+        
+        upcomingButton.setTitle("View Details", for: .normal)
+        upcomingButton.backgroundColor = UIColor(hex: "3278F6")
+        upcomingButton.setTitleColor(.white, for: .normal)
+        upcomingButton.layer.cornerRadius = 16
+        upcomingButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        
+        [upcomingTitle, upcomingName, upcomingDate, upcomingButton].forEach {
+            upcomingCard.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+        
+        NSLayoutConstraint.activate([
+            upcomingTitle.topAnchor.constraint(equalTo: upcomingCard.topAnchor, constant: 16),
+            upcomingTitle.leadingAnchor.constraint(equalTo: upcomingCard.leadingAnchor, constant: 16),
+            
+            upcomingName.topAnchor.constraint(equalTo: upcomingTitle.bottomAnchor, constant: 8),
+            upcomingName.leadingAnchor.constraint(equalTo: upcomingTitle.leadingAnchor),
+            
+            upcomingDate.topAnchor.constraint(equalTo: upcomingName.bottomAnchor, constant: 4),
+            upcomingDate.leadingAnchor.constraint(equalTo: upcomingTitle.leadingAnchor),
+            
+            upcomingButton.centerYAnchor.constraint(equalTo: upcomingCard.centerYAnchor),
+            upcomingButton.trailingAnchor.constraint(equalTo: upcomingCard.trailingAnchor, constant: -16),
+            upcomingButton.heightAnchor.constraint(equalToConstant: 36),
+            upcomingButton.widthAnchor.constraint(equalToConstant: 130)
+        ])
     }
+    
+    @objc private func viewDetailsTapped() {
+        onViewDetailsTapped?()
+    }
+    
+
     
     private func setupVideoSection() {
         let label = UILabel()
@@ -198,7 +310,7 @@ extension LandingHomeView {
         videoCollectionView.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: bookCard.bottomAnchor, constant: 24),
+            label.topAnchor.constraint(equalTo: appointmentContainer.bottomAnchor, constant: 24),
             label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             videoCollectionView.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 8),
             videoCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -252,24 +364,20 @@ extension LandingHomeView {
     }
 
     private func setupRedeemCard() {
-        // MARK: - Card setup
         redeemCard.layer.cornerRadius = 24
         redeemCard.clipsToBounds = true
         contentView.addSubview(redeemCard)
         redeemCard.translatesAutoresizingMaskIntoConstraints = false
 
-        // MARK: - Title label
         redeemLabel.text = "Enter your program code"
         redeemLabel.font = .boldSystemFont(ofSize: 20)
         redeemLabel.textColor = .white
 
-        // MARK: - Subtitle label
         let redeemSubLabel = UILabel()
         redeemSubLabel.text = "Unlock your personalized video program."
         redeemSubLabel.font = .systemFont(ofSize: 14, weight: .medium)
         redeemSubLabel.textColor = UIColor.white.withAlphaComponent(0.85)
 
-        // MARK: - TextField (capsule style)
         redeemTextField.placeholder = "Tap to enter code"
         redeemTextField.backgroundColor = .white
         redeemTextField.textColor = .darkGray
@@ -281,13 +389,11 @@ extension LandingHomeView {
         redeemTextField.textAlignment = .center
         redeemTextField.heightAnchor.constraint(equalToConstant: 30).isActive = true
 
-        // Add all elements
         [redeemLabel, redeemSubLabel, redeemTextField].forEach {
             redeemCard.addSubview($0)
             $0.translatesAutoresizingMaskIntoConstraints = false
         }
 
-        // Layout constraints
         NSLayoutConstraint.activate([
             redeemCard.topAnchor.constraint(equalTo: progressCard.bottomAnchor, constant: 24),
             redeemCard.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
@@ -306,14 +412,11 @@ extension LandingHomeView {
         ])
     }
 
-    
     override func layoutSubviews() {
         super.layoutSubviews()
         
-        // Remove existing gradients (avoid stacking)
         redeemCard.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
         
-        // Create and apply fresh gradient with correct bounds
         let gradient = CAGradientLayer()
         gradient.colors = [
             UIColor(hex: "1E6EF7").cgColor,
@@ -325,7 +428,6 @@ extension LandingHomeView {
         gradient.cornerRadius = redeemCard.layer.cornerRadius
         redeemCard.layer.insertSublayer(gradient, at: 0)
     }
-
 
     private func setupArticlesSection() {
         let label = UILabel()

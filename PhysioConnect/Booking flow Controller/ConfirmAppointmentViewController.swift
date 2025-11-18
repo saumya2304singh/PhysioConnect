@@ -8,6 +8,9 @@
 import UIKit
 
 final class ConfirmAppointmentViewController: UIViewController {
+    
+    // Callback up to DateTime → Detail → List → Home
+    var onBookingComplete: ((Doctor, Date) -> Void)?
 
     private let confirmView = ConfirmAppointmentView()
     
@@ -30,7 +33,6 @@ final class ConfirmAppointmentViewController: UIViewController {
         fillDoctorDetails()
         fillAppointmentSummary()
         
-        // Payment row taps
         confirmView.cardRow.isUserInteractionEnabled = true
         confirmView.upiRow.isUserInteractionEnabled = true
         confirmView.bankRow.isUserInteractionEnabled = true
@@ -76,15 +78,26 @@ final class ConfirmAppointmentViewController: UIViewController {
     
     // MARK: - Payment Selected → Success Screen
     @objc private func paymentSelected() {
-        let vc = SuccessAppointmentViewController()
-        vc.doctor = doctor
-        vc.appointmentDate = appointmentDate
-        vc.userLocation = userLocation
 
-        vc.modalPresentationStyle = .overFullScreen   // overlay on top
-        vc.modalTransitionStyle = .crossDissolve      // simple fade, no fancy animation
+        let successVC = SuccessAppointmentViewController()
+        successVC.doctor = doctor
+        successVC.appointmentDate = appointmentDate
+        successVC.userLocation = userLocation
 
-        present(vc, animated: true)
+        successVC.modalPresentationStyle = .overCurrentContext
+        successVC.modalTransitionStyle = .crossDissolve
+
+        successVC.onBookingComplete = { [weak self] doctor, date in
+            guard let self = self else { return }
+
+            // Pass final booking up
+            self.onBookingComplete?(doctor, date)
+            
+            // Return all the way to Home
+            //self.navigationController?.popToRootViewController(animated: true)
+        }
+
+        navigationController?.present(successVC, animated: true)
+
     }
-
 }
