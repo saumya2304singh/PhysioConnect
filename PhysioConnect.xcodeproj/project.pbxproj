@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		1F9252CE2EC8C38D00327316 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 1F9252CD2EC8C38D00327316 /* Auth */; };
+		1F9252D02EC8C38D00327316 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 1F9252CF2EC8C38D00327316 /* Functions */; };
+		1F9252D22EC8C38D00327316 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 1F9252D12EC8C38D00327316 /* PostgREST */; };
+		1F9252D42EC8C38D00327316 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 1F9252D32EC8C38D00327316 /* Realtime */; };
+		1F9252D62EC8C38D00327316 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 1F9252D52EC8C38D00327316 /* Storage */; };
+		1F9252D92EC8C69600327316 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 1F9252D82EC8C69600327316 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1FAD105C2EC18EE000C54244 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +74,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F9252D22EC8C38D00327316 /* PostgREST in Frameworks */,
+				1F9252D02EC8C38D00327316 /* Functions in Frameworks */,
+				1F9252D92EC8C69600327316 /* Supabase in Frameworks */,
+				1F9252CE2EC8C38D00327316 /* Auth in Frameworks */,
+				1F9252D62EC8C38D00327316 /* Storage in Frameworks */,
+				1F9252D42EC8C38D00327316 /* Realtime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,12 +100,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1F9252D72EC8C69600327316 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		1FAD103C2EC18EDE00C54244 = {
 			isa = PBXGroup;
 			children = (
 				1FAD10472EC18EDE00C54244 /* PhysioConnect */,
 				1FAD105E2EC18EE000C54244 /* PhysioConnectTests */,
 				1FAD10682EC18EE000C54244 /* PhysioConnectUITests */,
+				1F9252D72EC8C69600327316 /* Frameworks */,
 				1FAD10462EC18EDE00C54244 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -125,6 +148,12 @@
 			);
 			name = PhysioConnect;
 			packageProductDependencies = (
+				1F9252CD2EC8C38D00327316 /* Auth */,
+				1F9252CF2EC8C38D00327316 /* Functions */,
+				1F9252D12EC8C38D00327316 /* PostgREST */,
+				1F9252D32EC8C38D00327316 /* Realtime */,
+				1F9252D52EC8C38D00327316 /* Storage */,
+				1F9252D82EC8C69600327316 /* Supabase */,
 			);
 			productName = PhysioConnect;
 			productReference = 1FAD10452EC18EDE00C54244 /* PhysioConnect.app */;
@@ -208,6 +237,9 @@
 			);
 			mainGroup = 1FAD103C2EC18EDE00C54244;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1FAD10462EC18EDE00C54244 /* Products */;
 			projectDirPath = "";
@@ -563,6 +595,50 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1F9252CD2EC8C38D00327316 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		1F9252CF2EC8C38D00327316 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		1F9252D12EC8C38D00327316 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		1F9252D32EC8C38D00327316 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		1F9252D52EC8C38D00327316 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		1F9252D82EC8C69600327316 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F9252CA2EC8BECB00327316 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1FAD103D2EC18EDE00C54244 /* Project object */;
 }
